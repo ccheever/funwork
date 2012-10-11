@@ -2,10 +2,24 @@
   (:use (ring.middleware reload
                          stacktrace))
   (:require [clj-json.core :as json]
-            [ring.adapter.jetty :as jetty]))
+            [ring.adapter.jetty :as jetty]
+            [taoensso.nippy :as nippy]))
 
+;-------------------------------------------------------------------------------
 
 (set! *warn-on-reflection* true)
+
+(defn nip-freeze [data ^String file]
+  (with-open [fos (java.io.FileOutputStream. file)
+              dos (java.io.DataOutputStream. fos)]
+    (nippy/freeze-to-stream! dos data)))
+
+(defn freeze [data ^String file]
+  (with-open [fos (java.io.FileOutputStream. file)
+              oos (java.io.ObjectOutputStream. fos)]
+    (.writeObject oos data)))
+
+;-------------------------------------------------------------------------------
 
 (defonce data*
   (json/parse-string (slurp "../../shareable_medication.json")
@@ -38,21 +52,18 @@
                       (vals r))))))
 
 (defn prefixes [r]
-  (set
-    (flatten
-      (apply concat (map str-prefixes (tokens r))))))
-
-(defn conjmerge [lis]
-  (apply (partial merge-with conj) lis))
+  (into #{}
+        (for [t (tokens r)
+              p (str-prefixes t)]
+          p)))
 
 (defn prefix-index []
-  (conjmerge
-    (for [r data*]
-      (conjmerge
-        (for [p (prefixes r)]
-          {p #{r}})))))
+  (apply (partial merge-with clojure.set/union)
+    (for [r data*
+          p (prefixes r)]
+      {p #{r}})))
 
-(defonce pindex* (prefix-index))
+;(defonce pindex* (time (prefix-index)))
 
 ;-------------------------------------------------------------------------------
 ; webserver
