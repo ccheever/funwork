@@ -25,6 +25,10 @@ class IndexJs(tornado.web.RequestHandler):
     def get(self):
         self.write(file("index.js").read())
 
+class IndexCss(tornado.web.RequestHandler):
+    def get(self):
+        self.write(file("index.css").read())
+
 class Search(tornado.web.RequestHandler):
     def get(self):
         return "Placeholder for JSONified records"
@@ -35,6 +39,7 @@ application = tornado.web.Application([
     (r"/", MainHandler),
     (r"/index.html", IndexHtml),
     (r"/index.js", IndexJs),
+    (r"/index.css", IndexCss),
     (r"/search", Search),
 
 ])
