@@ -1,8 +1,13 @@
 import getpass
+import json
 import os
 
 from flask import Flask
 app = Flask(__name__)
+
+from flask import request
+
+import preloaded_completer
 
 USER = getpass.getuser()
 if USER == "aiba":
@@ -30,6 +35,11 @@ def index_css():
 @app.route("/index.js")
 def index_js():
     return local_file("index.js")
+
+@app.route("/search")
+def search():
+    q = request.args.get('q')
+    return json.dumps(preloaded_completer.match(q))
 
 if __name__ == '__main__':
     app.run(debug=True, port=PORT, host="0.0.0.0")

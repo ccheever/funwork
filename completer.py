@@ -1,5 +1,6 @@
 import json
 import re
+import marshal
 
 DATA = json.load(file("shareable_medication.json"))
 
@@ -41,3 +42,7 @@ def match2(s):
     for i in ids:
         x.append(BY_ID[i])
     return x
+
+def write_by_prefix():
+    marshal.dump(BY_PREFIX, open("shareable_medication_prefixes.pm", "w"))
+
