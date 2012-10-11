@@ -1,7 +1,11 @@
 import json
-
+import re
 
 DATA = json.load(file("shareable_medication.json"))
+
+BY_ID = {}
+for row in DATA:
+    BY_ID[row["id"]] = row
 
 def match(s):
     s_ = s.lower()
@@ -21,9 +25,19 @@ for record in DATA:
         if field == "id":
             continue
         if val is not None:
-            s = val.lower()
-            for i in xrange(len(s)):
-                prefix = s[:i + 1]
-                if not BY_PREFIX.has_key(prefix):
-                    BY_PREFIX[prefix] = []
-                BY_PREFIX[prefix].append(record)
+            tokens = re.split("[^0-9a-z]", val.lower())
+            for s in tokens:
+                if not s:
+                    continue
+                for i in xrange(len(s)):
+                    prefix = s[:i + 1]
+                    if not BY_PREFIX.has_key(prefix):
+                        BY_PREFIX[prefix] = set()
+                    BY_PREFIX[prefix].add(record["id"])
+
+def match2(s):
+    ids = BY_PREFIX.get(s.lower(), set())
+    x = []
+    for i in ids:
+        x.append(BY_ID[i])
+    return x
