@@ -1,3 +1,26 @@
+* { padding: 0; margin: 0; }
+body { font-family: sans-serif; background: #ffe; }
 
-body { font-family: sans-serif; }
+div#query {
+  padding: 1em;
+  border-bottom: 1px solid #aaa;
+  margin-bottom: 1em;
+  background: #eee;
+}
+
+div.r {
+  background: #fff;
+  margin: 1em;
+}
+
+table {
+  border-collapse:collapse;
+  border: 1px solid #ccc;
+  display: block;
+}
+td {
+  padding: 0.2em 0.5em;
+  border-bottom: 1px solid #ccc;
+}
+td.k { background: #eee; }
 
