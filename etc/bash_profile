@@ -1,0 +1,2 @@
+export FUNWORK_PATH=$HOME/funwork
+alias funwork="cd $FUNWORK_PATH; source bin/activate"
