@@ -64,6 +64,5 @@
           bp)))))
 
 (defn by-prefix [p]
-  (doall
-    (map by-id* (by-prefix* p))))
+  (map by-id* (by-prefix* p)))
 
