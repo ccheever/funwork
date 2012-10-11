@@ -2,22 +2,21 @@
   (:use (ring.middleware reload
                          stacktrace))
   (:require [clj-json.core :as json]
-            [ring.adapter.jetty :as jetty]
-            [taoensso.nippy :as nippy]))
+            [ring.adapter.jetty :as jetty]))
 
 ;-------------------------------------------------------------------------------
 
 (set! *warn-on-reflection* true)
 
-(defn nip-freeze [data ^String file]
-  (with-open [fos (java.io.FileOutputStream. file)
-              dos (java.io.DataOutputStream. fos)]
-    (nippy/freeze-to-stream! dos data)))
-
 (defn freeze [data ^String file]
   (with-open [fos (java.io.FileOutputStream. file)
               oos (java.io.ObjectOutputStream. fos)]
     (.writeObject oos data)))
+
+(defn thaw [^String file]
+  (with-open [fis (java.io.FileInputStream. file)
+              ois (java.io.ObjectInputStream. fis)]
+    (.readObject ois)))
 
 ;-------------------------------------------------------------------------------
 
@@ -63,11 +62,18 @@
           p (prefixes r)]
       {p #{r}})))
 
-;(defonce pindex* (time (prefix-index)))
+(defonce pindex* (time (prefix-index)))
 
 ;-------------------------------------------------------------------------------
 ; webserver
 ;-------------------------------------------------------------------------------
+
+(defn render-search [req]
+  (let [q (get-in req [:params "q"])
+        result (pindex* q)]
+    {:status 200
+     :headers {"Content-Type" "application/json"}
+     :body (json/generate-string result)}))
 
 (defn handler [req]
   {:status 200
@@ -80,5 +86,4 @@
 
 (defn -main [& args]
   (jetty/run-jetty #'app {:port 8080 :join? false}))
-
 
