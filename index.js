@@ -7,7 +7,7 @@ $(document).ready(function() {
     '<div id="results"></div>'
     ].join(''));
 
-  $("#q").keydown(function(e) {
+  $("#q").keyup(function(e) {
 
     if (g_request_inflight) {
       g_request_inflight.abort();
@@ -15,6 +15,9 @@ $(document).ready(function() {
     }
 
     var q = $("#q").val();
+    if (q.length < 2) {
+      return;
+    }
     g_request_inflight = $.ajax({
       url: '/search',
       data: {q:q},
@@ -23,11 +26,11 @@ $(document).ready(function() {
         g_request_inflight = null;
       },
       success: function(data,status,xhr) {
-        console.log("data:", data);
+ //       console.log("data:", data);
         var results = $.parseJSON(data);
-        console.log("results:", results);
-        //show_results(results);
-        show_results([ {a: 1, b:2}, {c: 3, d:"foo"} ]);
+//        console.log("results:", results);
+        show_results(results);
+        //show_results([ {a: 1, b:2}, {c: 3, d:"foo"} ]);
         g_request_inflight = null;
       }
     });
@@ -39,6 +42,7 @@ $(document).ready(function() {
 
 function show_results(rlis) {
   $('#results').empty();
+  $('#results').append('<div style="margin-left:1em;">'+rlis.length+' results</div>');
   _.each(rlis, function(r) {
     var t = [];
     _.each(r, function(v,k) {

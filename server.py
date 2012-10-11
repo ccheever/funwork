@@ -39,7 +39,7 @@ def index_js():
 @app.route("/search")
 def search():
     q = request.args.get('q')
-    return json.dumps(preloaded_completer.match(q))
+    return json.dumps(preloaded_completer.match(q)[:20])
 
 if __name__ == '__main__':
     app.run(debug=True, port=PORT, host="0.0.0.0")
