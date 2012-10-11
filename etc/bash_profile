@@ -1,1 +1,3 @@
 alias funwork="cd $FUNWORK_PATH; source bin/activate"
+export PATH=$PATH:/usr/local/java/jdk/bin
+
