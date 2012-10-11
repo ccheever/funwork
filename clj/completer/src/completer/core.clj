@@ -1,5 +1,9 @@
 (ns completer.core
-  (:require [clj-json [core :as json]]))
+  (:use (ring.middleware reload
+                         stacktrace))
+  (:require [clj-json.core :as json]
+            [ring.adapter.jetty :as jetty]))
+
 
 (set! *warn-on-reflection* true)
 
@@ -51,6 +55,19 @@
 (defonce pindex* (prefix-index))
 
 ;-------------------------------------------------------------------------------
+; webserver
+;-------------------------------------------------------------------------------
 
+(defn handler [req]
+  {:status 200
+   :body "hello world"})
+
+(def app
+  (-> #'handler
+    (wrap-reload)
+    (wrap-stacktrace)))
+
+(defn -main [& args]
+  (jetty/run-jetty #'app {:port 8080 :join? false}))
 
 
