@@ -1,0 +1,1 @@
+alias funwork="cd $FUNWORK_PATH; source bin/activate"
