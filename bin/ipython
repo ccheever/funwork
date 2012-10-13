@@ -1,4 +1,4 @@
-#!/home/ccheever/funwork/bin/python
+#!/usr/bin/env python
 # EASY-INSTALL-ENTRY-SCRIPT: 'ipython==0.13','console_scripts','ipython'
 __requires__ = 'ipython==0.13'
 import sys
