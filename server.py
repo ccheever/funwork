@@ -21,10 +21,6 @@ def local_file(file_name):
     return file(os.path.join(os.path.abspath(os.path.join(__file__, os.path.pardir)), file_name)).read()
 
 @app.route('/')
-def hello_world():
-    return 'Hello zoom!'
-
-@app.route("/index.html")
 def index_html():
     return local_file("index.html")
 
