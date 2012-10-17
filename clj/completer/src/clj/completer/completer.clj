@@ -1,5 +1,7 @@
 (ns completer.completer
-  (:require [clj-json.core :as json]))
+  (:require [clj-json.core :as json])
+  (:import (org.limewire.collection PatriciaTrie
+                                    CharSequenceKeyAnalyzer)))
 
 (set! *warn-on-reflection* true)
 
@@ -44,6 +46,19 @@
           p (prefixes r)]
       {p #{(:id r)}})))
 
+(defn token-index [data]
+  (apply (partial merge-with clojure.set/union)
+    (for [r data
+          t (tokens r)]
+      {t #{(:id r)}})))
+
+(defn make-trie [data]
+  (let [pt (PatriciaTrie. (CharSequenceKeyAnalyzer.))
+        tindex (token-index data)]
+    (doseq [[token ids] tindex]
+      (.put pt token (long-array ids)))
+    pt))
+
 ;-------------------------------------------------------------------------------
 
 (defonce data*
@@ -54,7 +69,7 @@
         (for [r data*]
           {(:id r) r})))
 
-(defonce by-prefix*
+#_(defonce by-prefix*
   (let [f "./by-prefix.obj.gz"]
     (if (.exists (clojure.java.io/file f))
       (thaw f)
@@ -63,6 +78,6 @@
           (freeze bp f)
           bp)))))
 
-(defn by-prefix [p]
+#_(defn by-prefix [p]
   (map by-id* (by-prefix* p)))
 
