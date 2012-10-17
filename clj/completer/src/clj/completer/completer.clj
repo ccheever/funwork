@@ -69,15 +69,18 @@
         (for [r data*]
           {(:id r) r})))
 
-#_(defonce by-prefix*
-  (let [f "./by-prefix.obj.gz"]
+(defonce ptrie*
+  (let [f "./trie.obj.gz"]
     (if (.exists (clojure.java.io/file f))
       (thaw f)
       (do
-        (let [bp (prefix-index data*)]
-          (freeze bp f)
-          bp)))))
+        (let [pt (make-trie data*)]
+          (freeze pt f)
+          pt)))))
 
-#_(defn by-prefix [p]
-  (map by-id* (by-prefix* p)))
+(defn by-prefix [p]
+  (let [submap (.getPrefixedBy ptrie* p)]
+    (flatten
+      (map #(seq (.getValue %))
+           (.entrySet submap)))))
 
