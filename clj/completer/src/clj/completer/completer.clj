@@ -56,7 +56,7 @@
   (let [pt (PatriciaTrie. (CharSequenceKeyAnalyzer.))
         tindex (token-index data)]
     (doseq [[token ids] tindex]
-      (.put pt token (long-array ids)))
+      (.put pt token ids))
     pt))
 
 ;-------------------------------------------------------------------------------
@@ -70,13 +70,17 @@
           {(:id r) r})))
 
 (defonce ^PatriciaTrie ptrie*
-  (let [f "./trie.obj.gz"]
+  (do
+    (println "building trie...")
+    (make-trie data*)))
+
+  #_(let [f "./trie.obj.gz"]
     (if (.exists (clojure.java.io/file f))
       (thaw f)
       (do
         (let [pt (make-trie data*)]
           (freeze pt f)
-          pt)))))
+          pt))))
 
 (defn by-prefix [p]
   (let [submap (.getPrefixedBy ptrie* p)]
@@ -84,4 +88,7 @@
           (flatten
             (map (fn [^java.util.Map$Entry e] (seq (.getValue e)))
                  (.entrySet submap))))))
+
+(defn by-id [id]
+  (by-id* id))
 

@@ -26,10 +26,10 @@ $(document).ready(function() {
         g_request_inflight = null;
       },
       success: function(data,status,xhr) {
- //       console.log("data:", data);
-        var results = $.parseJSON(data);
+//        console.log("data:", data);
+//        var results = $.parseJSON(data);
 //        console.log("results:", results);
-        show_results(results);
+        show_results(data);
         //show_results([ {a: 1, b:2}, {c: 3, d:"foo"} ]);
         g_request_inflight = null;
       }
