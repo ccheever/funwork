@@ -69,7 +69,7 @@
         (for [r data*]
           {(:id r) r})))
 
-(defonce ptrie*
+(defonce ^PatriciaTrie ptrie*
   (let [f "./trie.obj.gz"]
     (if (.exists (clojure.java.io/file f))
       (thaw f)
@@ -80,7 +80,8 @@
 
 (defn by-prefix [p]
   (let [submap (.getPrefixedBy ptrie* p)]
-    (flatten
-      (map #(seq (.getValue %))
-           (.entrySet submap)))))
+    (into #{}
+          (flatten
+            (map (fn [^java.util.Map$Entry e] (seq (.getValue e)))
+                 (.entrySet submap))))))
 
