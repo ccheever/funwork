@@ -22,6 +22,20 @@ _BY_ID = None
 
 logging.basicConfig(level=logging.INFO)
 
+class _LogTime(object):
+
+    def __init__(self, s):
+        self.s = s
+
+    def __enter__(self):
+        self.start_time = time.time()
+        logging.info(self.s.capitalize() + "...")
+
+    def __exit__(self, *ignored):
+        self.end_time = time.time()
+        logging.info("Done %s in %.2f seconds" % (self.s, self.end_time - self.start_time))
+
+
 def data_by_id():
     global _BY_ID
     if _BY_ID is None:
@@ -33,94 +47,53 @@ def _data_from_mysql():
     # This may need to be refactored if there's a case where this
     # where all this data can't fit into memory at one time
 
-    logging.info("Loading data from MySQL...")
+    with _LogTime("loading data from MySQL"):
 
-    start_t = time.time()
-
-    db = MySQLdb.connect(host=MYSQL_HOST, user=MYSQL_USER, passwd=MYSQL_PASS, port=MYSQL_PORT, db=MYSQL_DB)
-    cursor = db.cursor()
-    # {"genericName": "Amiodarone Hydrochloride", "strength": "200 mg", "displayName": "AMIODARONE 200 mg", "id": 4890951727, "brandName": "Amiodarone"}
-    cursor.execute("SELECT id, displayName, brandName, genericName, strength FROM shareable_medication")
-    by_id = {}
-    for row in cursor.fetchall():
-        by_id[row[0]] = {
-            "id": row[0],
-            "displayName": row[1],
-            "brandName": row[2],
-            "genericName": row[3],
-            "strength": row[4],
-        }
-
-    end_t = time.time()
-
-    logging.info("Loaded data from MySQL in %.2f seconds" % (end_t - start_t))
-
+        db = MySQLdb.connect(host=MYSQL_HOST, user=MYSQL_USER, passwd=MYSQL_PASS, port=MYSQL_PORT, db=MYSQL_DB)
+        cursor = db.cursor()
+        # {"genericName": "Amiodarone Hydrochloride", "strength": "200 mg", "displayName": "AMIODARONE 200 mg", "id": 4890951727, "brandName": "Amiodarone"}
+        cursor.execute("SELECT id, displayName, brandName, genericName, strength FROM shareable_medication")
+        by_id = {}
+        for row in cursor.fetchall():
+            by_id[row[0]] = {
+                "id": row[0],
+                "displayName": row[1],
+                "brandName": row[2],
+                "genericName": row[3],
+                "strength": row[4],
+            }
 
     return by_id
 
 def load_into_sqlite():
 
-    # Clear out old data if it exists since if medications are
-    # removed, we want them to disappear and have MySQL be the
-    # canonical source
-    try:
-        SQLITE_DB.execute("DROP TABLE `%s`" % SQLITE_BY_ID_TABLE)
-    except sqlite3.OperationalError:
-        # Table didn't exist
-        pass
-
     # Update data by id
     by_id = data_by_id()
 
-    logging.info("Loading data into SQLite...")
-    start_t = time.time()
+    with _LogTime("loading data into SQLite"):
+        d = sqlitedict.SqliteDict(SQLITE_DB, table=SQLITE_BY_ID_TABLE, init=by_id)
+    with _LogTime("computing prefixes"):
+        pd = {}
+        td = {}
+        n = 0
+        for record in by_id.itervalues():
+            (ps, ts) = prefixes_and_tokens(record)
+            v = record["id"]
+            for p in ps:
+                if not pd.has_key(p):
+                    pd[p] = set()
+                pd[p].add(v)
+            for t in ts:
+                if not td.has_key(t):
+                    td[t] = set()
+                td[t].add(v)
+            n += 1
+            if not n % 10000:
+                print n
 
-    d = sqlitedict.SqliteDict(SQLITE_DB, table=SQLITE_BY_ID_TABLE)
-    d.begin()
-    d.update(by_id)
-    d.commit()
-    end_t = time.time()
-    logging.info("Loaded data into SQLite in %.2f seconds" % (end_t - start_t))
-
-    start_t = time.time()
-    logging.info("Computing prefixes and writing them to SQLite...")
-
-    pd = {}
-    td = {}
-    n = 0
-    for record in by_id.itervalues():
-        (ps, ts) = prefixes_and_tokens(record)
-        v = record["id"]
-        for p in ps:
-            if not pd.has_key(p):
-                pd[p] = set()
-            pd[p].add(v)
-        for t in ts:
-            if not td.has_key(t):
-                td[t] = set()
-            td[t].add(v)
-        n += 1
-        if not n % 10000:
-            print n
-
-    end_t = time.time()
-    logging.info("Computed prefixes in %.2f seconds" % (end_t - start_t))
-
-    start_t = time.time()
-    logging.info("Writing prefixes to SQLite...")
-
-    pds = sqlitedict.SqliteDict(SQLITE_DB, table="prefixes")
-    tds = sqlitedict.SqliteDict(SQLITE_DB, table="tokens")
-    pds.clear()
-    pds.begin()
-    pds.update(pd)
-    pds.commit()
-    tds.clear()
-    tds.begin()
-    tds.update(td)
-    tds.commit()
-    end_t = time.time()
-    logging.info("Wrote prefixes to SQLite in %.2f seconds" % (end_t - start_t))
+    with _LogTime("writing prefixes to SQLite"):
+        pds = sqlitedict.SqliteDict(SQLITE_DB, table="prefixes", init=pd)
+        tds = sqlitedict.SqliteDict(SQLITE_DB, table="tokens", init=td)
 
 def tokenize(s):
     return re.split("[^0-9a-z]", s.lower())
@@ -209,4 +182,5 @@ def match(q, limit=None):
         return rr
     else:
         return rr[:limit]
+
 

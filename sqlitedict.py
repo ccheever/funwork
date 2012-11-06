@@ -8,7 +8,7 @@ class SqliteDictError(Exception):
 
 class SqliteDict(UserDict.DictMixin):
 
-    def __init__(self, db=None, table="dict", keycol="key", valcol="value"):
+    def __init__(self, db=None, table="dict", keycol="key", valcol="value", init=None):
         self.keycol = keycol
         self.valcol = valcol
         self.table = table
@@ -19,9 +19,20 @@ class SqliteDict(UserDict.DictMixin):
             db = sqlite3.connect(self._dbstr)
         self.db = db
 
+        if init is not None:
+            self.clear()
+
+        self._create_table()
+
+        if init is not None:
+            self.begin()
+            self.update(init)
+            self.commit()
+
+    def _create_table(self):
         # Verify that tables and columns exist
         if not self.db.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", (self.table,)).fetchall():
-            self.db.execute("CREATE TABLE `%s` (`%s` blob PRIMARY KEY, `%s` blob)" % (table, keycol, valcol))
+            self.db.execute("CREATE TABLE `%s` (`%s` blob PRIMARY KEY, `%s` blob)" % (self.table, self.keycol, self.valcol))
 
     def keydumps(self, v):
         return v
@@ -59,3 +70,9 @@ class SqliteDict(UserDict.DictMixin):
     def commit(self):
         self.db.commit()
 
+    def clear(self):
+        try:
+            self.db.execute("DROP TABLE `%s`" % self.table)
+        except sqlite3.OperationalError:
+            pass # Table doesn't exist
+        self._create_table()
