@@ -148,14 +148,21 @@ def match(q, limit=None):
         # Take the ones where the second part of the tuple is True
         # which means that the string matches a complete token, i.e.
         # "viagra" not "via" (which would just be the beginning of a string)
-        results.append(bt[t])
+        try:
+            results.append(bt[t])
+        except KeyError:
+            results.append(set([]))
 
     # For the last token, we take both partial tokens and complete tokens,
     # i.e. "via" and "viagra" both match something that has "viagra" in it
     # TODO: In the future, make it so its not always the last token that 
     # is partial but wherever the cursor is
     if len(tokens[-1]) >= 2:
-        results.append(bp[tokens[-1]])
+        last_t = tokens[-1]
+        try:
+            results.append(bp[last_t])
+        except KeyError:
+            results.append(set([]))
 
     if not results:
         results.append(set())
@@ -164,15 +171,17 @@ def match(q, limit=None):
 
     # If the matching we've done doesn't have any hits, then
     # fallback to looking at the first things you type
-    if not limit or len(rr1) < limit:
+    if len(tokens) > 1 and (not limit or len(rr1) < limit):
         r2 = []
         for t in tokens:
             if len(t) >= 2:
-                r2.append(bp[t])
+                try:
+                    r2.append(bp[t])
+                except KeyError:
+                    r2.append(set([]))
         if not r2:
             r2.append(set())
         rr2 = set.intersection(*r2)
-        print "rr2=%r" % rr2
         rr2.difference_update(rr1)
     else:
         rr2 = set()

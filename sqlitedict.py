@@ -32,7 +32,7 @@ class SqliteDict(UserDict.DictMixin):
     def _create_table(self):
         # Verify that tables and columns exist
         if not self.db.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", (self.table,)).fetchall():
-            self.db.execute("CREATE TABLE `%s` (`%s` blob PRIMARY KEY, `%s` blob)" % (self.table, self.keycol, self.valcol))
+            self.db.execute("CREATE TABLE `%s` (`%s` string PRIMARY KEY, `%s` blob)" % (self.table, self.keycol, self.valcol))
 
     def keydumps(self, v):
         return v
@@ -76,3 +76,20 @@ class SqliteDict(UserDict.DictMixin):
         except sqlite3.OperationalError:
             pass # Table doesn't exist
         self._create_table()
+
+class RawValDict(SqliteDict):
+    """A SqliteDict that holds raw values like numbers and strings in
+        the value columns so that you can do JOINs and other operations
+        in SQL, and in general, the database can understand the data
+        in your value column.
+
+        Note that strings will be coerced to unicode upon entering the 
+        database by default.
+
+        """
+
+    def valdumps(self, v):
+        return v
+
+    def valloads(self, s):
+        return s
